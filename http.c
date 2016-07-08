@@ -360,26 +360,35 @@ static int socket_select(ft_http_client_t* http, int mode, int timeout)
 			(mode & kSelectError)	? &efd : NULL,
 			&tv);
 
-		gettimeofday(&elapsed, 0);
-		remaind = timeout - ((int)(elapsed.tv_sec - start.tv_sec) * 1000 + (int)(elapsed.tv_usec - start.tv_usec) / 1000);
+		if( r == 0)
+		{
+			return -1; /* timeout */
+		}
 
-		if(r == 0)
-		{
-			return -1;
-		}
-		else if(r < 0)
-		{
-			if(last_error() == HTTP_EINTR)
-			{
-				continue;
-			}
-			return -1;
-		}
-		else if( r > 0)
+		if( r > 0) 
 		{
 			if(getsockopt(http->fd, SOL_SOCKET, SO_ERROR, (char*)&error, &len) == 0 && error == 0)
 			{
 				return 0;
+			}
+			else
+			{
+				return -1;
+			}
+		}
+
+		if( r < 0 )
+		{
+			if(last_error() == HTTP_EINTR)
+			{
+				gettimeofday(&elapsed, 0);
+				remaind = timeout - ((int)(elapsed.tv_sec - start.tv_sec) * 1000 + (int)(elapsed.tv_usec - start.tv_usec) / 1000);
+
+				continue;
+			}
+			else
+			{
+				return -1;
 			}
 		}
 	};
@@ -512,6 +521,8 @@ static int on_download_file_cb(http_parser* parser, const char *at, size_t lengt
 			return -1;
 		}
 
+
+		/* report download progress */
 		if( http->recv_cb && (http->recv_cb)(http, at, length, http->content_length, http->user) != 0)
 		{
 			return -1;
