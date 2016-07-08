@@ -8,7 +8,9 @@
 3. 支持多平台(window linux)
 
 https库使用krypton(https://github.com/cesanta/krypton)
+
 http解析部分使用http_parser(https://github.com/nodejs/http-parser)
+
 
 使用非常简单，把上面文件复制到项目中就可以使用。
 
